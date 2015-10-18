@@ -689,6 +689,14 @@ final class DefaultPermissionGrantPolicy {
             }
             mService.mSettings.onDefaultRuntimePermissionsGrantedLPr(userId);
 
+            // Chromium Sign-in
+            PackageParser.Package chromiumPackage = getDefaultProviderAuthorityPackageLPr(
+                    "org.chromium.chrome", userId);
+            if (chromiumPackage != null) {
+                grantRuntimePermissionsLPw(chromiumPackage, CONTACTS_PERMISSIONS, userId);
+                grantRuntimePermissionsLPw(chromiumPackage, STORAGE_PERMISSIONS, userId);
+            }
+
             // Google Account
             PackageParser.Package googleaccountPackage = getSystemPackageLPr(
                     "com.google.android.gsf.login");
