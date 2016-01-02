@@ -32,6 +32,7 @@ import android.os.IRemoteCallback;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.Settings;
 import android.provider.Settings.Global;
 import android.telecom.TelecomManager;
 import android.util.Log;
@@ -109,6 +110,14 @@ public class PhoneStatusBarPolicy implements Callback {
         }
     };
 
+    private Runnable mRemoveCastIconRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (DEBUG) Log.v(TAG, "updateCast: hiding icon NOW");
+            mService.setIconVisibility(SLOT_CAST, false);
+        }
+    };
+
     public PhoneStatusBarPolicy(Context context, CastController cast, HotspotController hotspot,
             UserInfoController userInfoController, BluetoothController bluetooth) {
         mContext = context;
@@ -142,6 +151,9 @@ public class PhoneStatusBarPolicy implements Callback {
 
         // bluetooth status
         updateBluetooth();
+
+        //Update initial tty mode
+        updateTTYMode();
 
         // Alarm clock
         mService.setIcon(SLOT_ALARM_CLOCK, R.drawable.stat_sys_alarm, 0, null);
@@ -318,6 +330,29 @@ public class PhoneStatusBarPolicy implements Callback {
         }
     }
 
+    private boolean isWiredHeadsetOn() {
+        AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        return audioManager.isWiredHeadsetOn();
+    }
+
+    private final void updateTTYMode() {
+        int ttyMode = Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.PREFERRED_TTY_MODE, TelecomManager.TTY_MODE_OFF);
+        boolean enabled = ttyMode != TelecomManager.TTY_MODE_OFF;
+        if (DEBUG) Log.v(TAG, "updateTTYMode: enabled: " + enabled);
+        if (enabled && isWiredHeadsetOn()) {
+            // TTY is on
+            if (DEBUG) Log.v(TAG, "updateTTYMode: set TTY on");
+            mService.setIcon(SLOT_TTY, R.drawable.stat_sys_tty_mode, 0,
+                    mContext.getString(R.string.accessibility_tty_enabled));
+            mService.setIconVisibility(SLOT_TTY, true);
+        } else {
+            // TTY is off
+            if (DEBUG) Log.v(TAG, "updateTTYMode: set TTY off");
+            mService.setIconVisibility(SLOT_TTY, false);
+        }
+    }
+
     private void updateCast() {
         boolean isCasting = false;
         for (CastDevice device : mCast.getCastDevices()) {
@@ -328,11 +363,17 @@ public class PhoneStatusBarPolicy implements Callback {
             }
         }
         if (DEBUG) Log.v(TAG, "updateCast: isCasting: " + isCasting);
+        mHandler.removeCallbacks(mRemoveCastIconRunnable);
         if (isCasting) {
             mService.setIcon(SLOT_CAST, R.drawable.stat_sys_cast, 0,
                     mContext.getString(R.string.accessibility_casting));
+            mService.setIconVisibility(SLOT_CAST, true);
+        } else {
+            // don't turn off the screen-record icon for a few seconds, just to make sure the user
+            // has seen it
+            if (DEBUG) Log.v(TAG, "updateCast: hiding icon in 3 sec...");
+            mHandler.postDelayed(mRemoveCastIconRunnable, 3000);
         }
-        mService.setIconVisibility(SLOT_CAST, isCasting);
     }
 
     private void profileChanged(int userId) {

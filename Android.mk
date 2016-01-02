@@ -90,6 +90,7 @@ LOCAL_SRC_FILES += \
 	core/java/android/app/IWallpaperManager.aidl \
 	core/java/android/app/IWallpaperManagerCallback.aidl \
 	core/java/android/app/admin/IDevicePolicyManager.aidl \
+	core/java/android/app/trust/IStrongAuthTracker.aidl \
 	core/java/android/app/trust/ITrustManager.aidl \
 	core/java/android/app/trust/ITrustListener.aidl \
 	core/java/android/app/backup/IBackupManager.aidl \
@@ -161,6 +162,7 @@ LOCAL_SRC_FILES += \
 	core/java/android/hardware/fingerprint/IFingerprintDaemon.aidl \
 	core/java/android/hardware/fingerprint/IFingerprintDaemonCallback.aidl \
 	core/java/android/hardware/fingerprint/IFingerprintService.aidl \
+	core/java/android/hardware/fingerprint/IFingerprintServiceLockoutResetCallback.aidl \
 	core/java/android/hardware/fingerprint/IFingerprintServiceReceiver.aidl \
 	core/java/android/hardware/hdmi/IHdmiControlCallback.aidl \
 	core/java/android/hardware/hdmi/IHdmiControlService.aidl \
@@ -173,7 +175,9 @@ LOCAL_SRC_FILES += \
 	core/java/android/hardware/hdmi/IHdmiVendorCommandListener.aidl \
 	core/java/android/hardware/input/IInputManager.aidl \
 	core/java/android/hardware/input/IInputDevicesChangedListener.aidl \
+	core/java/android/hardware/input/ITabletModeChangedListener.aidl \
 	core/java/android/hardware/location/IActivityRecognitionHardware.aidl \
+	core/java/android/hardware/location/IActivityRecognitionHardwareClient.aidl \
 	core/java/android/hardware/location/IActivityRecognitionHardwareSink.aidl \
 	core/java/android/hardware/location/IActivityRecognitionHardwareWatcher.aidl \
 	core/java/android/hardware/location/IFusedLocationHardware.aidl \
@@ -293,6 +297,7 @@ LOCAL_SRC_FILES += \
 	core/java/com/android/internal/policy/IKeyguardStateCallback.aidl \
 	core/java/com/android/internal/os/IDropBoxManagerService.aidl \
 	core/java/com/android/internal/os/IParcelFileDescriptorFactory.aidl \
+	core/java/com/android/internal/os/IRegionalizationService.aidl \
 	core/java/com/android/internal/os/IResultReceiver.aidl \
 	core/java/com/android/internal/statusbar/IStatusBar.aidl \
 	core/java/com/android/internal/statusbar/IStatusBarService.aidl \
@@ -346,6 +351,7 @@ LOCAL_SRC_FILES += \
 	media/java/android/media/IRingtonePlayer.aidl \
 	media/java/android/media/IVolumeController.aidl \
 	media/java/android/media/audiopolicy/IAudioPolicyCallback.aidl \
+	media/java/android/media/midi/IBluetoothMidiService.aidl \
 	media/java/android/media/midi/IMidiDeviceListener.aidl \
 	media/java/android/media/midi/IMidiDeviceOpenCallback.aidl \
 	media/java/android/media/midi/IMidiDeviceServer.aidl \
