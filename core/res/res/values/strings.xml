@@ -459,6 +459,10 @@
          This will disable all third party applications you have installed.
          They will be restored when you reboot again.</string>
 
+    <!-- Reboot Confirmation Dialog.  Message in the confirmation dialog
+         when the user asks to reboot. [CHAR LIMIT=NONE] -->
+    <string name="reboot_question">Do you want to reboot?</string>
+
     <!-- Title of dialog to confirm rebooting. -->
     <string name="reboot_title">Reboot</string>
 
@@ -4130,4 +4134,12 @@
     <string name="China_Mobile">China Mobile</string>
     <string name="China_Unicom">China Unicom</string>
     <string name="China_Telecom">China Telecom</string>
+    
+    <!-- Reboot -->
+    <string name="global_action_reboot_more">Reboot\u2026</string>
+    <string name="global_action_reboot_sub">System</string>
+    <string name="global_action_reboot_recovery">Recovery</string>
+    <string name="global_action_reboot_bootloader">Bootloader</string>
+    <string name="global_action_reboot_soft">Software</string>
+
 </resources>

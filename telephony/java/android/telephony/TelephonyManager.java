@@ -1170,6 +1170,15 @@ public class TelephonyManager {
         return retVal;
     }
 
+    /**
+     * Return if the current radio is LTE on GSM
+     * @hide
+     */
+    public static int getLteOnGsmModeStatic() {
+        return SystemProperties.getInt(TelephonyProperties.PROPERTY_LTE_ON_GSM_DEVICE,
+                    0);
+    }
+
     //
     //
     // Current Network
@@ -2002,6 +2011,21 @@ public class TelephonyManager {
         } catch (NullPointerException ex) {
             // This could happen before phone restarts due to crashing
             return PhoneConstants.LTE_ON_CDMA_UNKNOWN;
+        }
+    }
+
+    /**
+     * Return if the current radio is LTE on GSM
+     * @hide
+     */
+    public int getLteOnGsmMode() {
+        try {
+            return getITelephony().getLteOnGsmMode();
+        } catch (RemoteException ex) {
+            return 0;
+        } catch (NullPointerException ex) {
+            // This could happen before phone restarts due to crashing
+            return 0;
         }
     }
 
@@ -4210,7 +4234,9 @@ public class TelephonyManager {
             if (telephony != null)
                 return telephony.needsOtaServiceProvisioning();
         } catch (RemoteException e) {
-            Log.e(TAG, "Error calling ITelephony#needsOtaServiceProvisioning", e);
+            Log.e(TAG, "Error calling ITelephony#isDataPossibleForSubscription", e);
+        } catch (NullPointerException npe) {
+            Log.e(TAG, "Error calling ITelephony#isDataPossibleForSubscription", npe);
         }
         return false;
     }
@@ -4230,7 +4256,9 @@ public class TelephonyManager {
             if (telephony != null)
                 telephony.setDataEnabled(subId, enable);
         } catch (RemoteException e) {
-            Log.e(TAG, "Error calling ITelephony#setDataEnabled", e);
+            Log.e(TAG, "Error calling ITelephony#needsOtaServiceProvisioning", e);
+        } catch (NullPointerException npe) {
+            Log.e(TAG, "Error calling ITelephony#needsOtaServiceProvisioning", npe);
         }
     }
 
@@ -4297,7 +4325,8 @@ public class TelephonyManager {
             if (telephony != null)
                 return telephony.isVideoCallingEnabled(getOpPackageName());
         } catch (RemoteException e) {
-            Log.e(TAG, "Error calling ITelephony#isVideoCallingEnabled", e);
+            Log.e(TAG, "Error calling ITelephony#getDataEnabled", e);
+        } catch (NullPointerException e) {
         }
         return false;
     }

@@ -81,6 +81,7 @@ import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.Log;
@@ -117,6 +118,7 @@ import android.view.animation.AnimationUtils;
 import com.android.internal.R;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.util.ScreenShapeHelper;
+import com.android.internal.view.RotationPolicy;
 import com.android.internal.widget.PointerLocationView;
 import com.android.server.GestureLauncherService;
 import com.android.server.LocalServices;
@@ -128,6 +130,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.List;
 
 import static android.view.WindowManager.LayoutParams.*;
@@ -397,6 +400,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     int mUserRotationMode = WindowManagerPolicy.USER_ROTATION_FREE;
     int mUserRotation = Surface.ROTATION_0;
+    int mUserRotationAngles = -1;
     boolean mAccelerometerDefault;
 
     boolean mSupportAutoRotation;
@@ -754,6 +758,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.POLICY_CONTROL), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.ACCELEROMETER_ROTATION_ANGLES), false, this,
                     UserHandle.USER_ALL);
             updateSettings();
         }
@@ -1778,6 +1785,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 updateRotation = true;
                 updateOrientationListenerLp();
             }
+
+            mUserRotationAngles = Settings.System.getInt(resolver,
+                    Settings.System.ACCELEROMETER_ROTATION_ANGLES, -1);
 
             if (mSystemReady) {
                 int pointerLocation = Settings.System.getIntForUser(resolver,
@@ -4718,22 +4728,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      */
     private boolean setKeyguardOccludedLw(boolean isOccluded) {
         boolean wasOccluded = mKeyguardOccluded;
-        boolean showing = mKeyguardDelegate.isShowing();
-        if (wasOccluded && !isOccluded && showing) {
+        if (wasOccluded && !isOccluded) {
             mKeyguardOccluded = false;
             mKeyguardDelegate.setOccluded(false);
-            mStatusBar.getAttrs().privateFlags |= PRIVATE_FLAG_KEYGUARD;
-            mStatusBar.getAttrs().flags |= FLAG_SHOW_WALLPAPER;
-            return true;
-        } else if (!wasOccluded && isOccluded && showing) {
+            if (mKeyguardDelegate.isShowing()) {
+                mStatusBar.getAttrs().privateFlags |= PRIVATE_FLAG_KEYGUARD;
+                mStatusBar.getAttrs().flags |= FLAG_SHOW_WALLPAPER;
+                return true;
+            }
+        } else if (!wasOccluded && isOccluded) {
             mKeyguardOccluded = true;
             mKeyguardDelegate.setOccluded(true);
-            mStatusBar.getAttrs().privateFlags &= ~PRIVATE_FLAG_KEYGUARD;
-            mStatusBar.getAttrs().flags &= ~FLAG_SHOW_WALLPAPER;
-            return true;
-        } else {
-            return false;
+            if (mKeyguardDelegate.isShowing()) {
+                mStatusBar.getAttrs().privateFlags &= ~PRIVATE_FLAG_KEYGUARD;
+                mStatusBar.getAttrs().flags &= ~FLAG_SHOW_WALLPAPER;
+                return true;
+            }
         }
+        return false;
     }
 
     private boolean isStatusBarKeyguard() {
@@ -5947,10 +5959,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mAllowAllRotations = mContext.getResources().getBoolean(
                             com.android.internal.R.bool.config_allowAllRotations) ? 1 : 0;
                 }
-                if (sensorRotation != mUpsideDownRotation
-                        || mAllowAllRotations == 1
-                        || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-                        || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_USER) {
+
+                // use sensor orientation if it's forced, or if the user has allowed it
+                boolean useSensorRotation =
+                        orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                        || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+                        || RotationPolicy.isRotationAllowed(sensorRotation, mUserRotationAngles,
+                                mAllowAllRotations != 0);
+                if (useSensorRotation) {
                     preferredRotation = sensorRotation;
                 } else {
                     preferredRotation = lastRotation;
@@ -6174,6 +6190,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     ProgressDialog mBootMsgDialog = null;
 
+    /**
+     * name of package currently being dex optimized
+     * as shown through this.showBootMessage(msg, always);
+     */
+    static String currentPackageName;
+    public void setPackageName(String pkgName) {
+        if (pkgName == null) {
+            pkgName = "stop.looking.at.me.swan";
+        }
+        this.currentPackageName = pkgName;
+    }
+
     /** {@inheritDoc} */
     @Override
     public void showBootMessage(final CharSequence msg, final boolean always) {
@@ -6233,7 +6261,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mBootMsgDialog.setCancelable(false);
                     mBootMsgDialog.show();
                 }
-                mBootMsgDialog.setMessage(msg);
+
+                // Only display the current package name if the main message says "Optimizing app N of M".
+                // We don't want to do this when the message says "Starting apps" or "Finishing boot", etc.
+                if (always && (currentPackageName != null)) {                    
+
+                    // Calculate random text color
+                    Random rand = new Random();
+                    String randomColor = Integer.toHexString(rand.nextInt(0xFFFFFF) & 0xFCFCFC );
+                    mBootMsgDialog.setMessage(Html.fromHtml(msg +
+                                                            "<br><b><font color=\"#" + randomColor + "\">" +
+                                                            currentPackageName +
+                                                            "</font></b>"));
+                }
+                else {
+                    mBootMsgDialog.setMessage(msg);
+                }
             }
         });
     }

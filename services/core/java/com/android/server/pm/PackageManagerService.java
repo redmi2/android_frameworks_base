@@ -195,6 +195,8 @@ import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 import android.util.Xml;
 import android.view.Display;
+import android.view.WindowManager;
+import android.view.WindowManagerPolicy;
 
 import dalvik.system.DexFile;
 import dalvik.system.VMRuntime;
@@ -221,6 +223,7 @@ import com.android.server.EventLogTags;
 import com.android.server.FgThread;
 import com.android.server.IntentResolver;
 import com.android.server.LocalServices;
+import com.android.server.policy.PhoneWindowManager;
 import com.android.server.ServiceThread;
 import com.android.server.SystemConfig;
 import com.android.server.Watchdog;
@@ -921,6 +924,9 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     // Stores a list of users whose package restrictions file needs to be updated
     private ArraySet<Integer> mDirtyUsers = new ArraySet<Integer>();
+
+    WindowManager mWindowManager;
+    private final WindowManagerPolicy mPolicy; // to set packageName
 
     final private DefaultContainerConnection mDefContainerConn =
             new DefaultContainerConnection();
@@ -1855,6 +1861,11 @@ public class PackageManagerService extends IPackageManager.Stub {
             mDefParseFlags = 0;
             mSeparateProcesses = null;
         }
+
+        mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        Display d = mWindowManager.getDefaultDisplay();
+        mPolicy = new PhoneWindowManager();
+        d.getMetrics(mMetrics);
 
         mInstaller = installer;
         mPackageDexOptimizer = new PackageDexOptimizer(this);
@@ -3771,12 +3782,6 @@ public class PackageManagerService extends IPackageManager.Stub {
 
             PermissionsState permissionsState = sb.getPermissionsState();
 
-            // Only the package manager can change flags for system component permissions.
-            final int flags = permissionsState.getPermissionFlags(bp.name, userId);
-            if ((flags & PackageManager.FLAG_PERMISSION_SYSTEM_FIXED) != 0) {
-                return;
-            }
-
             boolean hadState = permissionsState.getRuntimePermissionState(name, userId) != null;
 
             if (permissionsState.updatePermissionFlags(bp, userId, flagMask, flagValues)) {
@@ -5625,9 +5630,9 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     private boolean createIdmapForPackagePairLI(PackageParser.Package pkg,
             PackageParser.Package opkg) {
-        if (!opkg.mTrustedOverlay) {
+        if (!opkg.mTrustedOverlay && !(!opkg.mTrustedOverlay && opkg.mOverlayPriority == -1)) {
             Slog.w(TAG, "Skipping target and overlay pair " + pkg.baseCodePath + " and " +
-                    opkg.baseCodePath + ": overlay not trusted");
+                    opkg.baseCodePath + ": signatures do not match");
             return false;
         }
         ArrayMap<String, PackageParser.Package> overlaySet = mOverlays.get(pkg.packageName);
@@ -5647,7 +5652,26 @@ public class PackageManagerService extends IPackageManager.Stub {
             overlaySet.values().toArray(new PackageParser.Package[0]);
         Comparator<PackageParser.Package> cmp = new Comparator<PackageParser.Package>() {
             public int compare(PackageParser.Package p1, PackageParser.Package p2) {
-                return p1.mOverlayPriority - p2.mOverlayPriority;
+                if (!p1.mTrustedOverlay && !p2.mTrustedOverlay) {
+                    PackageSetting ps1;
+                    PackageSetting ps2;
+                    synchronized (mPackages) {
+                        ps1 = mSettings.peekPackageLPr(p1.packageName);
+                        if (ps1 == null) {
+                            return 0;
+                        }
+                        ps2 = mSettings.peekPackageLPr(p2.packageName);
+                        if (ps2 == null) {
+                            return 0;
+                        }
+                    }
+                    long diff = ps1.lastUpdateTime - ps2.lastUpdateTime;
+                    return diff == 0 ? 0 : (diff < 0 ? -1 : 1); // long to int, no loss of precision
+                }
+                if (p1.mTrustedOverlay && p2.mTrustedOverlay) {
+                    return p1.mOverlayPriority - p2.mOverlayPriority;
+                }
+                return p1.mTrustedOverlay ? -1 : 1;
             }
         };
         Arrays.sort(overlayArray, cmp);
@@ -5867,6 +5891,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     synchronized (mPackages) {
                         // Just remove the loaded entries from package lists.
                         mPackages.remove(ps.name);
+                        removeFromOverlaysLP(ps.pkg);
                     }
 
                     logCriticalInfo(Log.WARN, "Package " + ps.name + " at " + scanFile
@@ -6224,14 +6249,22 @@ public class PackageManagerService extends IPackageManager.Stub {
         if (DEBUG_DEXOPT) {
             Log.i(TAG, "Optimizing app " + curr + " of " + total + ": " + pkg.packageName);
         }
-        if (!isFirstBoot()) {
+        try {
+            // give the packagename to the PhoneWindowManager
+            ApplicationInfo ai;
             try {
-                ActivityManagerNative.getDefault().showBootMessage(
-                        mContext.getResources().getString(R.string.android_upgrading_apk,
-                                curr, total), true);
-            } catch (RemoteException e) {
+                ai = mContext.getPackageManager().getApplicationInfo(pkg.packageName, 0);
+            } catch (Exception e) {
+                ai = null;
             }
+            mPolicy.setPackageName((String) (ai != null ? mContext.getPackageManager().getApplicationLabel(ai) : pkg.packageName));
+
+            ActivityManagerNative.getDefault().showBootMessage(
+                    mContext.getResources().getString(R.string.android_upgrading_apk,
+                            curr, total), true);
+        } catch (RemoteException e) {
         }
+
         PackageParser.Package p = pkg;
         synchronized (mInstallLock) {
             mPackageDexOptimizer.performDexOpt(p, null /* instruction sets */,
@@ -7163,7 +7196,6 @@ public class PackageManagerService extends IPackageManager.Stub {
                                 for (int j=0; j<sysPs.pkg.libraryNames.size(); j++) {
                                     if (name.equals(sysPs.pkg.libraryNames.get(j))) {
                                         allowed = true;
-                                        allowed = true;
                                         break;
                                     }
                                 }
@@ -7579,6 +7611,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                         throw new PackageManagerException(INSTALL_FAILED_UPDATE_INCOMPATIBLE,
                                 "scanPackageLI failed to createIdmap");
                     }
+                }
+                PackageParser.Package targetPkg = mPackages.get(pkg.mOverlayTarget);
+                if (targetPkg != null) {
+                    killApplication(pkg.mOverlayTarget, targetPkg.applicationInfo.uid,
+                            "overlay package installed");
                 }
             } else if (mOverlays.containsKey(pkg.packageName) &&
                     !pkg.packageName.equals("android")) {
@@ -8273,6 +8310,8 @@ public class PackageManagerService extends IPackageManager.Stub {
         if (r != null) {
             if (DEBUG_REMOVE) Log.d(TAG, "  Libraries: " + r);
         }
+        
+        removeFromOverlaysLP(pkg);
     }
 
     private static boolean hasPermission(PackageParser.Package pkgInfo, String perm) {
@@ -8744,6 +8783,10 @@ public class PackageManagerService extends IPackageManager.Stub {
                 // For development permissions, a development permission
                 // is granted only if it was already granted.
                 allowed = origPermissions.hasInstallPermission(perm);
+            }
+            if ((pkg.packageName.equals("com.google.android.katniss")) ||
+                    (pkg.packageName.equals("com.google.android.tungsten.setupwraith"))) {
+                allowed = true;
             }
         }
         return allowed;
@@ -14468,6 +14511,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     public ComponentName getHomeActivities(List<ResolveInfo> allHomeCandidates) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
 
         final int callingUserId = UserHandle.getCallingUserId();
         List<ResolveInfo> list = queryIntentActivities(intent, null,
@@ -16624,6 +16668,41 @@ public class PackageManagerService extends IPackageManager.Stub {
                                     + before.splitRevisionCodes[j]);
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    private void removeFromOverlaysLP(PackageParser.Package pkg) {
+        if (pkg == null) {
+            return;
+        }
+        if (pkg.mOverlayTarget == null) {
+            // regular package
+            ArrayMap<String, PackageParser.Package> map = mOverlays.get(pkg.mOverlayTarget);
+            if (map != null) {
+                for (PackageParser.Package opkg : map.values()) {
+                    mInstaller.removeIdmap(opkg.baseCodePath);
+                }
+            }
+            mOverlays.remove(pkg.packageName);
+        } else {
+            // overlay package
+            PackageParser.Package target = mPackages.get(pkg.mOverlayTarget);
+            if (target != null && target.applicationInfo.resourceDirs != null) {
+                killApplication(pkg.mOverlayTarget, target.applicationInfo.uid,
+                        "overlay package removed");
+                ArrayList<String> tmp =
+                    new ArrayList<String>(Arrays.asList(target.applicationInfo.resourceDirs));
+                tmp.remove(pkg.applicationInfo.sourceDir);
+                target.applicationInfo.resourceDirs = tmp.toArray(new String[0]);
+            }
+
+            mInstaller.removeIdmap(pkg.baseCodePath);
+
+            for (ArrayMap<String, PackageParser.Package> map : mOverlays.values()) {
+                if (map.containsKey(pkg.packageName)) {
+                    map.remove(pkg.packageName);
                 }
             }
         }

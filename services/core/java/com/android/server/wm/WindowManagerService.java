@@ -634,9 +634,9 @@ public class WindowManagerService extends IWindowManager.Stub
     PowerManager mPowerManager;
     PowerManagerInternal mPowerManagerInternal;
 
-    float mWindowAnimationScaleSetting = 1.0f;
-    float mTransitionAnimationScaleSetting = 1.0f;
-    float mAnimatorDurationScaleSetting = 1.0f;
+    float mWindowAnimationScaleSetting = 0.5f;
+    float mTransitionAnimationScaleSetting = 0.5f;
+    float mAnimatorDurationScaleSetting = 0.5f;
     boolean mAnimationsDisabled = false;
 
     final InputManagerService mInputManager;
@@ -5673,6 +5673,12 @@ public class WindowManagerService extends IWindowManager.Stub
         ShutdownThread.rebootSafeMode(mContext, confirm);
     }
 
+    // Called by window manager policy.  Not exposed externally.
+    @Override
+    public void reboot(String reason, boolean confirm) {
+        ShutdownThread.reboot(mContext, reason, confirm);
+    }
+
     public void setCurrentProfileIds(final int[] currentProfileIds) {
         synchronized (mWindowMap) {
             mCurrentProfileIds = currentProfileIds;
@@ -5777,7 +5783,7 @@ public class WindowManagerService extends IWindowManager.Stub
         boolean wallpaperEnabled = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_enableWallpaperService)
                 && !mOnlyCore;
-        boolean haveKeyguard = true;
+        boolean haveKeyguard = false;
         // TODO(multidisplay): Expand to all displays?
         final WindowList windows = getDefaultWindowListLocked();
         final int N = windows.size();
@@ -6202,10 +6208,13 @@ public class WindowManagerService extends IWindowManager.Stub
         int retryCount = 0;
         WindowState appWin = null;
 
-        final boolean appIsImTarget = mInputMethodTarget != null
-                && mInputMethodTarget.mAppToken != null
-                && mInputMethodTarget.mAppToken.appToken != null
-                && mInputMethodTarget.mAppToken.appToken.asBinder() == appToken;
+        boolean appIsImTarget;
+        synchronized(mWindowMap) {
+            appIsImTarget = mInputMethodTarget != null
+                    && mInputMethodTarget.mAppToken != null
+                    && mInputMethodTarget.mAppToken.appToken != null
+                    && mInputMethodTarget.mAppToken.appToken.asBinder() == appToken;
+        }
 
         final int aboveAppLayer = (mPolicy.windowTypeToLayerLw(TYPE_APPLICATION) + 1)
                 * TYPE_LAYER_MULTIPLIER + TYPE_LAYER_OFFSET;

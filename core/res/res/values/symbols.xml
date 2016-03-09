@@ -823,6 +823,7 @@
   <java-symbol type="string" name="reboot_to_reset_title" />
   <java-symbol type="string" name="reboot_to_reset_message" />
   <java-symbol type="string" name="reboot_confirm" />
+  <java-symbol type="string" name="reboot_question" />
   <java-symbol type="string" name="reboot_safemode_confirm" />
   <java-symbol type="string" name="reboot_safemode_title" />
   <java-symbol type="string" name="reboot_title" />
@@ -1640,6 +1641,7 @@
   <java-symbol type="bool" name="config_enableNetworkLocationOverlay" />
   <java-symbol type="bool" name="config_sf_limitedAlpha" />
   <java-symbol type="bool" name="config_unplugTurnsOnScreen" />
+  <java-symbol type="bool" name="config_usbChargingMessage" />
   <java-symbol type="bool" name="config_allowAutoBrightnessWhileDozing" />
   <java-symbol type="bool" name="config_allowTheaterModeWakeFromUnplug" />
   <java-symbol type="bool" name="config_allowTheaterModeWakeFromGesture" />
@@ -2445,4 +2447,18 @@
   <java-symbol type="string" name="operator_ping_url" />
   <java-symbol type="bool" name="config_zero_balance_operator"/>
   <java-symbol type="bool" name="config_passpoint_setting_on" />
+
+  <!-- Power menu reboot -->
+  <java-symbol name="ic_lock_power_reboot" type="drawable" />
+  <java-symbol name="global_action_reboot" type="string" />
+  <java-symbol name="global_action_reboot_sub" type="string" />
+  <java-symbol name="global_action_reboot_more" type="string" />
+  <java-symbol name="ic_lock_power_rebootrecovery" type="drawable" />
+  <java-symbol name="global_action_reboot_recovery" type="string" />
+  <java-symbol name="ic_lock_power_rebootbootloader" type="drawable" />
+  <java-symbol name="global_action_reboot_bootloader" type="string" />
+  <java-symbol name="ic_lock_power_soft" type="drawable" />
+  <java-symbol name="global_action_reboot_soft" type="string" />
+  <java-symbol type="array" name="config_rebootActionsList" />
+
 </resources>

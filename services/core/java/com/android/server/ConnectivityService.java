@@ -166,7 +166,7 @@ public class ConnectivityService extends IConnectivityManager.Stub
         implements PendingIntent.OnFinished {
     private static final String TAG = "ConnectivityService";
 
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final boolean VDBG = false;
 
     private static final boolean LOGD_RULES = false;
@@ -2234,6 +2234,8 @@ public class ConnectivityService extends IConnectivityManager.Stub
             NetworkFactoryInfo nfi = mNetworkFactoryInfos.remove(msg.replyTo);
             if (DBG && nfi != null) log("unregisterNetworkFactory for " + nfi.name);
         }
+        NetworkFactoryInfo nfi = mNetworkFactoryInfos.remove(msg.replyTo);
+        if (DBG && nfi != null) log("unregisterNetworkFactory for " + nfi.name);
     }
 
     // If this method proves to be too slow then we can maintain a separate
