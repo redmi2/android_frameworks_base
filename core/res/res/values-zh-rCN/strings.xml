@@ -1533,4 +1533,11 @@
     <string name="permission_title">权限</string>
     <string name="allow_button">允许</string>
     <string name="deny_button">拒绝</string>
+    <!-- Reboot -->
+    <string name="global_action_reboot_more">重启\u2026</string>
+    <string name="global_action_reboot_sub">系统</string>
+    <string name="global_action_reboot_recovery">复苏</string>
+    <string name="global_action_reboot_bootloader">引导程序</string>
+    <string name="global_action_reboot_soft">软件</string>
+    
 </resources>
