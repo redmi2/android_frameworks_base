@@ -4463,6 +4463,24 @@ public class TelephonyManager {
        }
    }
 
+     /**
+     * Returns the IMS Registration Status using subId.
+     * @hide
+     */
+    public boolean isImsRegisteredUsingSubId(int subId) {
+        try {
+            ITelephony telephony = getITelephony();
+            if (telephony == null)
+                return false;
+            return telephony.isImsRegisteredUsingSubId(subId);
+        } catch (RemoteException ex) {
+            return false;
+        } catch (NullPointerException ex) {
+            return false;
+        }
+    }
+
+
     /**
      * Returns the Status of Volte
      * @hide
@@ -4475,7 +4493,22 @@ public class TelephonyManager {
        } catch (NullPointerException ex) {
            return false;
        }
-   }
+    }
+
+    /**
+     * Returns the Status of Volte
+     * using subId
+     * @hide
+     */
+    public boolean isVolteAvailableUsingSubId(int subId) {
+       try {
+           return getITelephony().isVolteAvailableUsingSubId(subId);
+       } catch (RemoteException ex) {
+           return false;
+       } catch (NullPointerException ex) {
+           return false;
+       }
+    }
 
     /**
      * Returns the Status of video telephony (VT)
@@ -4492,6 +4525,21 @@ public class TelephonyManager {
     }
 
     /**
+     * Returns the Status of VT (video telephony)
+     * using subId
+     * @hide
+     */
+     public boolean isVideoTelephonyAvailableUsingSubId(int subId) {
+       try {
+           return getITelephony().isVideoTelephonyAvailableUsingSubId(subId);
+       } catch (RemoteException ex) {
+           return false;
+       } catch (NullPointerException ex) {
+           return false;
+       }
+    }
+
+    /**
      * Returns the Status of Wi-Fi Calling
      * @hide
      */
@@ -4504,6 +4552,37 @@ public class TelephonyManager {
            return false;
        }
    }
+
+    /**
+     * Returns the Status of VOWIFI calling
+     * using subId
+     * @hide
+     */
+    public boolean isVoWifiCallingAvailableUsingSubId(int subId) {
+       try {
+           return getITelephony().isVoWifiCallingAvailableUsingSubId(subId);
+       } catch (RemoteException ex) {
+           return false;
+       } catch (NullPointerException ex) {
+           return false;
+       }
+    }
+
+    /**
+     * Returns the Status of Video telephony wifi calling
+     * using subId
+     * @hide
+     */
+    public boolean isVideoTelephonyWifiCallingAvailableUsingSubId(int subId) {
+       try {
+           return getITelephony()
+                       .isVideoTelephonyWifiCallingAvailableUsingSubId(subId);
+       } catch (RemoteException ex) {
+           return false;
+       } catch (NullPointerException ex) {
+           return false;
+       }
+    }
 
    /**
     * Set TelephonyProperties.PROPERTY_ICC_OPERATOR_NUMERIC for the default phone.
