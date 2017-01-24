@@ -278,7 +278,7 @@
     <string name="def_date_format" translatable="false"></string>
 
     <!-- Time format,default value is 24 : 24 format,other value is 12 format -->
-    <string name="def_time_format" translatable="false"></string>
+    <string name="def_time_format" translatable="false">24</string>
 
     <!-- enable accessibility or not,1:enable;0:disable -->
     <integer name="def_enable_accessibility">0</integer>
