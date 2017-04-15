@@ -309,7 +309,7 @@ public class MobileSignalController extends SignalController<
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE, TelephonyIcons.LTE);
             if (mContext.getResources().getBoolean(R.bool.show_network_indicators)){
                 mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE_CA,
-                        TelephonyIcons.FOUR_G_PLUS);
+                        TelephonyIcons.LTE_PLUS);
             } else {
             if (mConfig.hideLtePlus) {
                 mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE_CA,
