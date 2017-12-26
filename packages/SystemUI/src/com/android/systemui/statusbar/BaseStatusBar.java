@@ -216,6 +216,9 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected boolean mHeadsUpTicker = false;
     protected boolean mDisableNotificationAlerts = false;
 
+    // Enable navigation bar.
+    protected boolean mUseNavBar = false;
+
     protected DevicePolicyManager mDevicePolicyManager;
     protected IDreamManager mDreamManager;
     protected PowerManager mPowerManager;
@@ -229,7 +232,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     private UserManager mUserManager;
     private int mDensity;
 
-    private KeyguardManager mKeyguardManager;
+    protected KeyguardManager mKeyguardManager;
     private LockPatternUtils mLockPatternUtils;
 
     // UI-specific methods
@@ -961,6 +964,10 @@ public abstract class BaseStatusBar extends SystemUI implements
             mLocale = locale;
             mLayoutDirection = ld;
             refreshLayout(ld);
+        }
+
+        if (mAssistManager != null) {
+            mAssistManager.onConfigurationChanged();
         }
     }
 

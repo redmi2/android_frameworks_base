@@ -728,9 +728,9 @@ public class WindowManagerService extends IWindowManager.Stub
     PowerManager mPowerManager;
     PowerManagerInternal mPowerManagerInternal;
 
-    float mWindowAnimationScaleSetting = 1.0f;
-    float mTransitionAnimationScaleSetting = 1.0f;
-    float mAnimatorDurationScaleSetting = 1.0f;
+    float mWindowAnimationScaleSetting = 0.5f;
+    float mTransitionAnimationScaleSetting = 0.5f;
+    float mAnimatorDurationScaleSetting = 0.5f;
     boolean mAnimationsDisabled = false;
 
     final InputManagerService mInputManager;
@@ -6016,7 +6016,7 @@ public class WindowManagerService extends IWindowManager.Stub
         boolean wallpaperEnabled = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_enableWallpaperService)
                 && !mOnlyCore;
-        boolean haveKeyguard = true;
+        boolean haveKeyguard = false;
         // TODO(multidisplay): Expand to all displays?
         final WindowList windows = getDefaultWindowListLocked();
         final int N = windows.size();
@@ -10462,6 +10462,11 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean hasNavigationBar() {
         return mPolicy.hasNavigationBar();
+    }
+
+    @Override
+    public boolean needsNavigationBar() {
+        return mPolicy.needsNavigationBar();
     }
 
     @Override

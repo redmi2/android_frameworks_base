@@ -1825,7 +1825,7 @@ final class ActivityStack {
                     // them. However, when they don't have the wallpaper behind them, we want to
                     // show activities in the next application stack behind them vs. another
                     // task in the home stack like recents.
-                    behindFullscreenActivity = true;
+                    behindFullscreenActivity = task.getTopActivity() != null;
                 } else if (task.isRecentsTask()
                         && task.getTaskToReturnTo() == APPLICATION_ACTIVITY_TYPE) {
                     if (DEBUG_VISIBILITY) Slog.v(TAG_VISIBILITY,
@@ -3244,7 +3244,7 @@ final class ActivityStack {
                 return;
             } else {
                 final TaskRecord task = r.task;
-                if (r.frontOfTask && task == topTask() && task.isOverHomeStack()) {
+                if (r.frontOfTask && task.isOverHomeStack()) {
                     final int taskToReturnTo = task.getTaskToReturnTo();
 
                     // For non-fullscreen stack, we want to move the focus to the next visible
@@ -4228,7 +4228,7 @@ final class ActivityStack {
                         hasVisibleActivities = true;
                     }
                     final boolean remove;
-                    if ((!r.haveState && !r.stateNotNeeded) || r.finishing) {
+                    if ((!r.haveState && !r.stateNotNeeded) || r.finishing || app.removed) {
                         // Don't currently have state for the activity, or
                         // it is finishing -- always remove it.
                         remove = true;
@@ -4977,7 +4977,13 @@ final class ActivityStack {
             if (focusedStack && topTask) {
                 // Give the latest time to ensure foreground task can be sorted
                 // at the first, because lastActiveTime of creating task is 0.
-                ci.lastActiveTime = System.currentTimeMillis();
+                long currentTime = System.currentTimeMillis();
+                // only update lastActiveTime if the currentTime is greater.
+                // The current time becomes lesser if the system date is changed to past.
+                // This FIXes the recents app not launching issue.
+                if(ci.lastActiveTime < currentTime) {
+                    ci.lastActiveTime = currentTime;
+                }
                 topTask = false;
             }
 

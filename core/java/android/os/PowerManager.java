@@ -408,6 +408,20 @@ public final class PowerManager {
     public static final String REBOOT_RECOVERY_UPDATE = "recovery-update";
 
     /**
+     * The value to pass as the 'reason' argument to reboot() to reboot into
+     * recovery mode with no specified purpose, instead user has asked to only
+     * reboot to recovery.
+     * <p>
+     * Requires the {@link android.Manifest.permission#RECOVERY}
+     * permission (in addition to
+     * {@link android.Manifest.permission#REBOOT}).
+     * </p>
+     * @carlosavignano
+     * @hide
+     */
+    public static final String REBOOT_RECOVERY_USER = "recovery-user";
+
+    /**
      * The value to pass as the 'reason' argument to reboot() when device owner requests a reboot on
      * the device.
      * @hide
@@ -419,6 +433,13 @@ public final class PowerManager {
      * @hide
      */
     public static final String REBOOT_SAFE_MODE = "safemode";
+
+    /**
+     * The 'reason' value used when rebooting into bootloader
+     * @carlosavignano
+     * @hide
+     */
+    public static final String REBOOT_BOOTLOADER = "bootloader";
 
     /**
      * The value to pass as the 'reason' argument to android_reboot().
@@ -471,6 +492,37 @@ public final class PowerManager {
         return mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_screenBrightnessSettingDefault);
     }
+
+    /**
+     * Gets the minimum supported button brightness setting.
+     * The screen may be allowed to become dimmer than this value but
+     * this is the minimum value that can be set by the user.
+     * @hide
+     */
+    public int getMinimumButtonBrightnessSetting() {
+        return mContext.getResources().getInteger(
+                com.android.internal.R.integer.config_buttonBrightnessSettingMinimum);
+    }
+
+    /**
+     * Gets the maximum supported button brightness setting.
+     * The screen may be allowed to become dimmer than this value but
+     * this is the maximum value that can be set by the user.
+     * @hide
+     */
+    public int getMaximumButtonBrightnessSetting() {
+        return mContext.getResources().getInteger(
+                com.android.internal.R.integer.config_buttonBrightnessSettingMaximum);
+    }
+
+    /**
+     * Gets the default button brightness setting.
+     * @hide
+     */
+    public int getDefaultButtonBrightnessSetting() {
+        return mContext.getResources().getInteger(
+                com.android.internal.R.integer.config_buttonBrightnessSettingDefault);
+    }    
 
     /**
      * Gets the minimum supported screen brightness setting for VR Mode.
@@ -730,6 +782,22 @@ public final class PowerManager {
     public void wakeUp(long time, String reason) {
         try {
             mService.wakeUp(time, reason, mContext.getOpPackageName());
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * Forces the device to wake up from sleep only if
+     * nothing is blocking the proximity sensor
+     *
+     * @see #wakeUp
+     *
+     * @hide
+     */
+    public void wakeUpWithProximityCheck(long time, String reason) {
+        try {
+            mService.wakeUpWithProximityCheck(time, reason, mContext.getOpPackageName());
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }

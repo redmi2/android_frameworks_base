@@ -2818,8 +2818,10 @@ public class AudioService extends IAudioService.Stub {
     public void setBluetoothScoOnInt(boolean on) {
         if (on) {
             mForcedUseForComm = AudioSystem.FORCE_BT_SCO;
+            AudioSystem.setParameters("BT_SCO=on");
         } else if (mForcedUseForComm == AudioSystem.FORCE_BT_SCO) {
             mForcedUseForComm = AudioSystem.FORCE_NONE;
+            AudioSystem.setParameters("BT_SCO=off");
         }
 
         sendMsg(mAudioHandler, MSG_SET_FORCE_USE, SENDMSG_QUEUE,
@@ -5687,9 +5689,9 @@ public class AudioService extends IAudioService.Stub {
     }
 
     private boolean readCameraSoundForced() {
-        return SystemProperties.getBoolean("audio.camerasound.force", false) ||
+        return SystemProperties.getBoolean("audio.camerasound.force", false) /* ||
                 mContext.getResources().getBoolean(
-                        com.android.internal.R.bool.config_camera_sound_forced);
+                        com.android.internal.R.bool.config_camera_sound_forced)*/;
     }
 
     //==========================================================================================

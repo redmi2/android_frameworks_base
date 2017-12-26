@@ -119,6 +119,7 @@ import com.android.internal.app.IVoiceInteractor;
 import com.android.internal.app.ToolbarActionBar;
 import com.android.internal.app.WindowDecorActionBar;
 import com.android.internal.policy.PhoneWindow;
+import com.android.internal.policy.DecorView;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -844,6 +845,15 @@ public class Activity extends ContextThemeWrapper
     private boolean mEatKeyUpEvent;
 
     private static native String getDlWarning();
+
+    /**
+     * Return the activity handler instance.
+     *
+     * @hide
+     */
+    public Handler getHandler() {
+        return mHandler;
+    }
 
     /** Return the intent that started this activity. */
     public Intent getIntent() {
@@ -5174,6 +5184,7 @@ public class Activity extends ContextThemeWrapper
             ViewManager wm = getWindowManager();
             wm.addView(mDecor, getWindow().getAttributes());
             mWindowAdded = true;
+            DecorView.setAddedToWindow(mDecor);
         }
         mDecor.setVisibility(View.VISIBLE);
     }

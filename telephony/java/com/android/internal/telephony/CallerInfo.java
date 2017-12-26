@@ -29,6 +29,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.PhoneLookup;
 import android.provider.ContactsContract.RawContacts;
+import android.provider.ContactsContract.Contacts;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -191,6 +192,11 @@ public class CallerInfo {
                 // CallerInfo object as well.
 
                 int columnIndex;
+                String photoUri;
+                do {
+                    photoUri = cursor.getString(cursor.getColumnIndex(PhoneLookup.PHOTO_URI));
+                    columnIndex = (photoUri != null) ? photoUri.indexOf(Contacts.Photo.DISPLAY_PHOTO) : 0;
+                } while(columnIndex <= 0 && !cursor.isLast() && cursor.moveToNext());
 
                 // Look for the name
                 columnIndex = cursor.getColumnIndex(PhoneLookup.DISPLAY_NAME);
@@ -578,7 +584,7 @@ public class CallerInfo {
      * @return a geographical description string for the specified number.
      * @see com.android.i18n.phonenumbers.PhoneNumberOfflineGeocoder
      */
-    private static String getGeoDescription(Context context, String number) {
+    public static String getGeoDescription(Context context, String number) {
         if (VDBG) Rlog.v(TAG, "getGeoDescription('" + number + "')...");
 
         if (TextUtils.isEmpty(number)) {

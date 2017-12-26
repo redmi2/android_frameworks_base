@@ -242,6 +242,8 @@ public class RequestThreadManager {
                     }
                 } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
                     Log.w(TAG, "Surface abandoned, dropping frame. ", e);
+                } catch (IllegalArgumentException e) {
+                    Log.w(TAG, "no valid native surface, dropping frame. ", e);
                 }
             }
 
@@ -946,6 +948,9 @@ public class RequestThreadManager {
                         Log.e(TAG, "Interrupted while waiting for requests to complete: ", e);
                         mDeviceState.setError(
                                 CameraDeviceImpl.CameraDeviceCallbacks.ERROR_CAMERA_DEVICE);
+                    }
+                    if (mPreviewTexture != null) {
+                        mPreviewTexture.setOnFrameAvailableListener(null);
                     }
                     if (mGLThreadManager != null) {
                         mGLThreadManager.quit();

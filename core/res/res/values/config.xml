@@ -116,17 +116,17 @@
     <bool name="config_sendAudioBecomingNoisy">true</bool>
 
     <!-- The duration (in milliseconds) of a short animation. -->
-    <integer name="config_shortAnimTime">200</integer>
+    <integer name="config_shortAnimTime">150</integer>
 
     <!-- The duration (in milliseconds) of a medium-length animation. -->
-    <integer name="config_mediumAnimTime">400</integer>
+    <integer name="config_mediumAnimTime">250</integer>
 
     <!-- The duration (in milliseconds) of a long animation. -->
-    <integer name="config_longAnimTime">500</integer>
+    <integer name="config_longAnimTime">300</integer>
 
     <!-- The duration (in milliseconds) of the activity open/close and fragment open/close animations. -->
-    <integer name="config_activityShortDur">150</integer>
-    <integer name="config_activityDefaultDur">220</integer>
+    <integer name="config_activityShortDur">100</integer>
+    <integer name="config_activityDefaultDur">150</integer>
 
     <!-- Duration for the dim animation behind a dialog.  This may be either
          a percentage, which is relative to the duration of the enter/open
@@ -784,7 +784,7 @@
 
     <!-- Control whether Night display is available. This should only be enabled on devices
          with HWC 2.0 or higher. -->
-    <bool name="config_nightDisplayAvailable">false</bool>
+    <bool name="config_nightDisplayAvailable">true</bool>
 
     <!-- Default mode to control how Night display is automatically activated.
          One of the following values (see NightDisplayController.java):
@@ -1380,6 +1380,8 @@
     <string-array name="config_locationProviderPackageNames" translatable="false">
         <!-- The standard AOSP fused location provider -->
         <item>com.android.location.fused</item>
+        <!-- The (faked) microg fused location provider -->
+        <item>com.google.android.gms</item>
     </string-array>
 
     <!-- This string array can be overriden to enable test location providers initially. -->
@@ -2219,10 +2221,12 @@
          "silent" = silent mode
          "users" = list of users
          "restart" = restart device
+         "screenshot" = screenshot
          -->
     <string-array translatable="false" name="config_globalActionsList">
         <item>power</item>
         <item>restart</item>
+        <item>screenshot</item>
         <item>bugreport</item>
         <item>users</item>
     </string-array>
@@ -2893,5 +2897,12 @@
          If review is not required, permissions are reviewed before the app
          is installed. -->
     <bool name="config_permissionReviewRequired">false</bool>
+
+    <!-- Default value for proximity check on screen wake
+         NOTE ! - Enable for devices that have a fast response proximity sensor (ideally < 300ms)
+    -->
+    <bool name="config_proximityCheckOnWake">false</bool>
+    <integer name="config_proximityCheckTimeout">250</integer>
+    <bool name="config_proximityCheckOnWakeEnabledByDefault">false</bool>
 
 </resources>

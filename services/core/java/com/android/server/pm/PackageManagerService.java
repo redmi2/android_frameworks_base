@@ -1854,8 +1854,18 @@ public class PackageManagerService extends IPackageManager.Stub {
         @Override
         public void onVolumeStateChanged(VolumeInfo vol, int oldState, int newState) {
             if (vol.type == VolumeInfo.TYPE_PRIVATE) {
-                if (vol.state == VolumeInfo.STATE_MOUNTED) {
-                    final String volumeUuid = vol.getFsUuid();
+                final String volumeUuid = vol.getFsUuid();
+                boolean volCurStateMounted = false;
+                // To handle a case where the onVolumeStateChanged callback is called with
+                // volume state MOUNTED, but the current state of volume is changed to
+                // UNMOUNTED/EJECTED state due to asynchronous behaviour of vold.
+                if(volumeUuid != null) {
+                    StorageManager storage = mContext.getSystemService(StorageManager.class);
+                    VolumeInfo currentVol = storage.findVolumeByUuid(volumeUuid);
+                    if(currentVol != null && currentVol.state == VolumeInfo.STATE_MOUNTED)
+                        volCurStateMounted = true;
+                }
+                if (vol.state == VolumeInfo.STATE_MOUNTED && volCurStateMounted) {
 
                     // Clean up any users or apps that were removed or recreated
                     // while this volume was missing
@@ -2312,7 +2322,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             File frameworkDir = new File(Environment.getRootDirectory(), "framework");
 
             final VersionInfo ver = mSettings.getInternalVersion();
-            mIsUpgrade = !Build.FINGERPRINT.equals(ver.fingerprint);
+            mIsUpgrade = !Build.DATE.equals(ver.fingerprint);
 
             // when upgrading from pre-M, promote system app permissions from install to runtime
             mPromoteSystemApps =
@@ -2371,8 +2381,14 @@ public class PackageManagerService extends IPackageManager.Stub {
                     | PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
 
+            // Collected privileged vendor packages.
+            final File privilegedVendorAppDir = new File(Environment.getVendorDirectory(), "priv-app");
+            scanDirLI(privilegedVendorAppDir, PackageParser.PARSE_IS_SYSTEM
+                    | PackageParser.PARSE_IS_SYSTEM_DIR
+                    | PackageParser.PARSE_IS_PRIVILEGED, scanFlags, 0);
+
             // Collect all vendor packages.
-            File vendorAppDir = new File("/vendor/app");
+            File vendorAppDir = new File(Environment.getVendorDirectory(), "app");
             try {
                 vendorAppDir = vendorAppDir.getCanonicalFile();
             } catch (IOException e) {
@@ -2691,7 +2707,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                         | Installer.FLAG_CLEAR_CODE_CACHE_ONLY);
                     }
                 }
-                ver.fingerprint = Build.FINGERPRINT;
+                ver.fingerprint = Build.DATE;
             }
 
             checkDefaultBrowser();
@@ -3168,8 +3184,27 @@ public class PackageManagerService extends IPackageManager.Stub {
                 ? Collections.<String>emptySet() : permissionsState.getPermissions(userId);
         final PackageUserState state = ps.readUserState(userId);
 
-        return PackageParser.generatePackageInfo(p, gids, flags,
-                ps.firstInstallTime, ps.lastUpdateTime, permissions, state, userId);
+        return mayFakeSignature(p, PackageParser.generatePackageInfo(p, gids, flags,
+                ps.firstInstallTime, ps.lastUpdateTime, permissions, state, userId),
+                permissions);
+    }
+
+    private PackageInfo mayFakeSignature(PackageParser.Package p, PackageInfo pi,
+            Set<String> permissions) {
+        try {
+            if (permissions.contains("android.permission.FAKE_PACKAGE_SIGNATURE")
+                    && p.applicationInfo.targetSdkVersion > Build.VERSION_CODES.LOLLIPOP_MR1
+                    && p.mAppMetaData != null) {
+                String sig = p.mAppMetaData.getString("fake-signature");
+                if (sig != null) {
+                    pi.signatures = new Signature[] {new Signature(sig)};
+                }
+            }
+        } catch (Throwable t) {
+            // We should never die because of any failures, this is system code!
+            Log.w("PackageManagerService.FAKE_PACKAGE_SIGNATURE", t);
+        }
+        return pi;
     }
 
     @Override
@@ -16131,7 +16166,10 @@ public class PackageManagerService extends IPackageManager.Stub {
         try {
             final String privilegedAppDir = new File(Environment.getRootDirectory(), "priv-app")
                     .getCanonicalPath();
-            return path.getCanonicalPath().startsWith(privilegedAppDir);
+            final String privilegedAppVendorDir = new File(Environment.getVendorDirectory(), "priv-app")
+                    .getCanonicalPath();
+            return (path.getCanonicalPath().startsWith(privilegedAppDir)
+                    || path.getCanonicalPath().startsWith(privilegedAppVendorDir));
         } catch (IOException e) {
             Slog.e(TAG, "Unable to access code path " + path);
         }
@@ -19632,7 +19670,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
                     Slog.w(TAG, "Failed to scan " + ps.codePath + ": " + e.getMessage());
                 }
 
-                if (!Build.FINGERPRINT.equals(ver.fingerprint)) {
+                if (!Build.DATE.equals(ver.fingerprint)) {
                     clearAppDataLIF(ps.pkg, UserHandle.USER_ALL,
                             StorageManager.FLAG_STORAGE_DE | StorageManager.FLAG_STORAGE_CE
                                     | Installer.FLAG_CLEAR_CODE_CACHE_ONLY);

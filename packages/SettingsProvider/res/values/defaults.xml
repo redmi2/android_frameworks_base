@@ -32,14 +32,14 @@
     <!-- Default screen brightness, from 0 to 255.  102 is 40%. -->
     <integer name="def_screen_brightness">102</integer>
     <bool name="def_screen_brightness_automatic_mode">false</bool>
-    <fraction name="def_window_animation_scale">100%</fraction>
-    <fraction name="def_window_transition_scale">100%</fraction>
+    <fraction name="def_window_animation_scale">50%</fraction>
+    <fraction name="def_window_transition_scale">50%</fraction>
     <bool name="def_haptic_feedback">true</bool>
 
     <bool name="def_bluetooth_on">false</bool>
     <bool name="def_wifi_display_on">false</bool>
-    <bool name="def_install_non_market_apps">false</bool>
-    <bool name="def_package_verifier_enable">true</bool>
+    <bool name="def_install_non_market_apps">true</bool>
+    <bool name="def_package_verifier_enable">false</bool>
     <!-- Comma-separated list of location providers.
          Network location is off by default because it requires
          user opt-in via Setup Wizard or Settings.
@@ -278,7 +278,7 @@
     <string name="def_date_format" translatable="false"></string>
 
     <!-- Time format,default value is 24 : 24 format,other value is 12 format -->
-    <string name="def_time_format" translatable="false"></string>
+    <string name="def_time_format" translatable="false">24</string>
 
     <!-- enable accessibility or not,1:enable;0:disable -->
     <integer name="def_enable_accessibility">0</integer>
@@ -299,4 +299,8 @@
     <string name="def_enable_input_methods" translatable="false"></string>
     <!-- Default for Settings.Global.CAPTIVE_PORTAL_DETECTION_ENABLED -->
     <integer name="def_captive_portal_detection_enabled" translatable="false">1</integer>
+
+    <!-- Default for Settings.Global.TETHER_DUN_REQUIRED -->
+    <integer name="def_tether_dun_required">0</integer>
+
 </resources>
